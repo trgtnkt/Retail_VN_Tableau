@@ -1,4 +1,4 @@
-﻿-- temp table for tracking returned orders 
+﻿-- Temp table for tracking returned orders 
 select *
 into #track_return 
 from Orders$ o left join return$ r on o.[Order ID] = r.[Order ID returned]
@@ -17,7 +17,7 @@ select o.Category, o.[Sub-Category], o.[Product Name]
 from Orders$ o left join return$ r on o.[Order ID] = r.[Order ID returned]
 where o.[Order Date] BETWEEN '2013-01-01' AND '2014-12-31'
 
--- mat hang nao co ti le return cao
+-- nganh hang nao co ti le bi return cao
 select Category, count([Product ID])
 from #track_return
 where Returned = 'Yes'
@@ -69,19 +69,4 @@ join ( select distinct c.[Customer ID]
 	  ) returning on returning.[Customer ID] = o.[Customer ID]
 where o.[Order Date] between '1-1-2014' and '12-31-2014')
 and [Order Date] between '1-1-2014' and '12-31-2014'
-
--- phân khúc khách hàng theo total sale 
-select max(total_sale), min(total_sale)
-from (select [Customer ID], sum(Sales) total_sale
-from Orders$ 
-group by [Customer ID]) a
-
-select [Customer ID], sum(Sales) total_sale
-from Orders$ 
-group by [Customer ID]
-order by 2 desc
-
-select sum(Sales)
-from Orders$
-where [Order Date] between '1-1-2014' and '12-31-2014'
 
