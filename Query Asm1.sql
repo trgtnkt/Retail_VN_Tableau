@@ -1,13 +1,13 @@
-﻿-- Temp table for tracking returned orders 
+-- Temp table for tracking returned orders 
 select *
 into #track_return 
 from Orders$ o left join return$ r on o.[Order ID] = r.[Order ID returned]
 
---
+-- check table 
 select *
 from #track_return t
 
--- tỉ lệ đơn bị return 
+-- ratio order returned 
 select sum(case when r.Returned = 'Yes' then 1 else 0 end) as Returned_Order, count(distinct o.[Order ID]) as TotalOrder
 from Orders$ o left join return$ r on o.[Order ID] = r.[Order ID returned]
 where o.[Order Date] BETWEEN '2013-01-01' AND '2014-12-31'
@@ -17,7 +17,7 @@ select o.Category, o.[Sub-Category], o.[Product Name]
 from Orders$ o left join return$ r on o.[Order ID] = r.[Order ID returned]
 where o.[Order Date] BETWEEN '2013-01-01' AND '2014-12-31'
 
--- nganh hang nao co ti le bi return cao
+-- Category has highest returned rate 
 select Category, count([Product ID])
 from #track_return
 where Returned = 'Yes'
@@ -57,7 +57,7 @@ join ( select distinct c.[Customer ID]
 where o.[Order Date] between '1-1-2014' and '12-31-2014') as ret 
 	on active_user.zz = ret.yy
 
--- new customer in 2014 
+-- New customer in 2014 
 select distinct [Customer ID] new_customer 
 from Orders$
 where [Customer ID] not in (
@@ -69,4 +69,15 @@ join ( select distinct c.[Customer ID]
 	  ) returning on returning.[Customer ID] = o.[Customer ID]
 where o.[Order Date] between '1-1-2014' and '12-31-2014')
 and [Order Date] between '1-1-2014' and '12-31-2014'
+
+--Rolling Sum Profit and Sales 
+select [Order Date], 
+	sum(Sales) over(order by o.[Order Date] ) as Rolling_Sale,
+	sum(Profit) over(order by o.[Order Date] ) as Rolling_Profit
+from Orders$ o
+where o.[Order Date] between '1-1-2014' and '12-31-2014'
+order by o.[Order Date]
+
+
+
 
