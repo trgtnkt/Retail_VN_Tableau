@@ -1,83 +1,62 @@
--- Temp table for tracking returned orders 
-select *
-into #track_return 
-from Orders$ o left join return$ r on o.[Order ID] = r.[Order ID returned]
+-- Revenue, No.Customers, Avg Transaction Value, Profit Margin each Year
+SELECT YEAR(O.[Order Date]) AS Year, 
+	   SUM(O.Sales) AS Revenue,
+	   COUNT (DISTINCT O.[Customer ID]) AS "No.Customers",
+	   SUM(O.Sales)/COUNT (DISTINCT O.[Order ID]) AS "Avg Trans Value",
+	   SUM(O.[Profit])/ SUM(O.Sales)*100 AS "Profit Margin"
+FROM Orders$ O
+GROUP BY YEAR(O.[Order Date])
+ORDER BY YEAR(O.[Order Date])
 
--- check table 
-select *
-from #track_return t
+-- Accumulated revenue and profit
+SELECT DISTINCT MONTH(O.[Order Date]) as Month,
+	   SUM(O.[Sales]) OVER (ORDER BY MONTH(O.[Order Date]))	as Revenue,
+	   SUM(O.[Profit]) OVER (ORDER BY MONTH(O.[Order Date])) as Profit
+FROM Orders$ O
+WHERE YEAR(O.[Order Date]) = 2014
+ORDER BY MONTH(O.[Order Date])
 
--- ratio order returned 
-select sum(case when r.Returned = 'Yes' then 1 else 0 end) as Returned_Order, count(distinct o.[Order ID]) as TotalOrder
-from Orders$ o left join return$ r on o.[Order ID] = r.[Order ID returned]
-where o.[Order Date] BETWEEN '2013-01-01' AND '2014-12-31'
+-- %Sale on Total Sale by Category 
+SELECT O.Category, 
+	   ROUND((SUM([Sales]) / (SELECT SUM([Sales]) 
+							  FROM Orders$ O
+							  WHERE YEAR([Order Date]) = 2014)*100),2) as Percentage 
+FROM Orders$ O
+WHERE YEAR([Order Date]) = 2014
+GROUP BY O.Category
 
--- don hang bi doi tra chua mat hang nao
-select o.Category, o.[Sub-Category], o.[Product Name]
-from Orders$ o left join return$ r on o.[Order ID] = r.[Order ID returned]
-where o.[Order Date] BETWEEN '2013-01-01' AND '2014-12-31'
+-- %Sale on Total Sale by Segment  
+SELECT O.Segment, 
+	   ROUND((SUM([Sales]) / (SELECT SUM([Sales]) 
+							  FROM Orders$ O
+							  WHERE YEAR([Order Date]) = 2014)*100),2) as Percentage 
+FROM Orders$ O
+WHERE YEAR([Order Date]) = 2014
+GROUP BY O.Segment
 
--- Category has highest returned rate 
-select Category, count([Product ID])
-from #track_return
-where Returned = 'Yes'
-group by Category
-order by 2 desc
+-- Sale Performance by Months 
+SELECT YEAR([Order Date]) Year, MONTH([Order Date]) Month, SUM([Sales]) Sales
+FROM Orders$ 
+GROUP BY YEAR([Order Date]), MONTH([Order Date])
+ORDER BY YEAR([Order Date]), MONTH([Order Date])
 
 -- Customer Retention Rate in 2014 
--- Active customer 
-select count(distinct o.[Customer ID]) as active_user
-from Orders$ o
-where o.[Order Date] between '1-1-2014' and '12-31-2014' 
-
--- Returning customer
-select distinct o.[Customer ID] as returning_user
-from Orders$ o
-join ( select distinct c.[Customer ID]
-	   from Orders$ c
-			where c.[Order Date] between '1-1-2013' and '12-31-2013'
-	  ) returning on returning.[Customer ID] = o.[Customer ID]
-where o.[Order Date] between '1-1-2014' and '12-31-2014'
-
---retention rate 
-select count(distinct yy) as returning_customer, count(distinct zz) as active_customer
-from 
+SELECT COUNT(DISTINCT re_user) AS returning_customer, 
+	   COUNT(DISTINCT act_user) AS active_customer
+FROM 
 	-- active user 
-	(select distinct o.[Customer ID] zz 
-	from Orders$ o
-	where o.[Order Date] between '1-1-2014' and '12-31-2014') as active_user
-left join 
+	(SELECT DISTINCT o.[Customer ID] act_user 
+	FROM Orders$ o
+	WHERE o.[Order Date] BETWEEN '1-1-2014' AND '12-31-2014') AS active_user
+LEFT JOIN 
 	-- returning user
-	(select distinct o.[Customer ID] yy 
-from Orders$ o
-join ( select distinct c.[Customer ID]
-	   from Orders$ c
-			where c.[Order Date] between '1-1-2013' and '12-31-2013'
-	  ) returning on returning.[Customer ID] = o.[Customer ID]
-where o.[Order Date] between '1-1-2014' and '12-31-2014') as ret 
-	on active_user.zz = ret.yy
-
--- New customer in 2014 
-select distinct [Customer ID] new_customer 
-from Orders$
-where [Customer ID] not in (
-select distinct o.[Customer ID] as returning_user
-from Orders$ o
-join ( select distinct c.[Customer ID]
-	   from Orders$ c
-			where c.[Order Date] between '1-1-2013' and '12-31-2013'
-	  ) returning on returning.[Customer ID] = o.[Customer ID]
-where o.[Order Date] between '1-1-2014' and '12-31-2014')
-and [Order Date] between '1-1-2014' and '12-31-2014'
-
---Rolling Sum Profit and Sales 
-select [Order Date], 
-	sum(Sales) over(order by o.[Order Date] ) as Rolling_Sale,
-	sum(Profit) over(order by o.[Order Date] ) as Rolling_Profit
-from Orders$ o
-where o.[Order Date] between '1-1-2014' and '12-31-2014'
-order by o.[Order Date]
-
-
+	(SELECT DISTINCT o.[Customer ID] re_user
+FROM Orders$ o
+JOIN (SELECT DISTINCT c.[Customer ID]
+	   FROM Orders$ c
+			WHERE c.[Order Date] BETWEEN '1-1-2013' AND'12-31-2013'
+	  ) returning ON returning.[Customer ID] = o.[Customer ID]
+WHERE o.[Order Date] BETWEEN '1-1-2014' AND'12-31-2014') AS ret 
+	ON active_user.act_user = ret.re_user
 
 
