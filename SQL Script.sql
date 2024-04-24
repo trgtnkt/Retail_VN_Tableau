@@ -19,8 +19,8 @@ ORDER BY MONTH(O.[Order Date])
 -- %Sale on Total Sale by Category 
 SELECT O.Category, 
 	   ROUND((SUM([Sales]) / (SELECT SUM([Sales]) 
-							  FROM Orders$ O
-							  WHERE YEAR([Order Date]) = 2014)*100),2) as Percentage 
+	                          FROM Orders$ O
+				  WHERE YEAR([Order Date]) = 2014)*100),2) as Percentage 
 FROM Orders$ O
 WHERE YEAR([Order Date]) = 2014
 GROUP BY O.Category
@@ -28,8 +28,8 @@ GROUP BY O.Category
 -- %Sale on Total Sale by Segment  
 SELECT O.Segment, 
 	   ROUND((SUM([Sales]) / (SELECT SUM([Sales]) 
-							  FROM Orders$ O
-							  WHERE YEAR([Order Date]) = 2014)*100),2) as Percentage 
+				  FROM Orders$ O
+				  WHERE YEAR([Order Date]) = 2014)*100),2) as Percentage 
 FROM Orders$ O
 WHERE YEAR([Order Date]) = 2014
 GROUP BY O.Segment
