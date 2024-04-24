@@ -7,4 +7,4 @@ This Dashboard let the end-users to view and evaluate about the business situati
 You can click this this link to use it: https://public.tableau.com/app/profile/kiet.truong4318/viz/RetailChainDashboard/Dashboard1
 
 ## SQL Script 
-I also write a Script to query the inforamtion that each of them matching with the chart on the dashboard. You can click to see more.
+I also write a SQL script to query the inforamtion that each of them matching with the chart on the dashboard. You can click to see more.
